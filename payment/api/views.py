@@ -18,23 +18,23 @@ class BalanceViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='balance-change')
     def balance_change(self, request, *args, **kwargs):
-        balance = self.get_object()
+        balance_id = kwargs.get('pk')
         from_date = request.query_params.get('from_date', '1970-01-01')
         to_date = request.query_params.get('to_date', datetime.now().strftime('%Y-%m-%d'))
 
         queryset = Transaction.objects.filter(
-            Q(balance_from=balance) | Q(balance_to=balance),
+            Q(balance_from=balance_id) | Q(balance_to=balance_id),
             created__range=(from_date, to_date)
         ).aggregate(
             total_amount=Sum(
                 Case(
-                    When(balance_to=balance, then='amount'),
+                    When(balance_to=balance_id, then='amount'),
                     default=0,
                     output_field=DecimalField()
                 )
             ) - Sum(
                 Case(
-                    When(balance_from=balance, then='amount'),
+                    When(balance_from=balance_id, then='amount'),
                     default=0,
                     output_field=DecimalField()
                 )
